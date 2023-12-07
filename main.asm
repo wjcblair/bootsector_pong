@@ -82,11 +82,18 @@ game_loop:
 
 	w_pressed:
 		dec word [player_y]
+		cmp word [player_y], 0
+		jge move_cpu
+		inc word [player_y]
 		jmp move_cpu
 
 	s_pressed:
 		inc word [player_y]
+		cmp word [player_y], VGA_HEIGHT-PADDLE_HEIGHT
+		jle move_cpu
+		dec word [player_y]
 		jmp move_cpu
+
 
 
 	move_cpu:
