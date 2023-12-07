@@ -16,6 +16,8 @@ ROW_BLEN		equ VGA_WIDTH*2	; width in bytes: 1 byte for color (4 bits fg, 4 bits 
 PADDLE_INIT_Y	equ 10
 PLAYER_X		equ 4
 CPU_INIT_X		equ ROW_BLEN-3
+W_KEY			equ 11h
+S_KEY			equ 1Fh
 
 ;; VARIABLES ----
 player_y: dw PADDLE_INIT_Y
@@ -50,6 +52,9 @@ game_loop:
 		stosw					; Store the contents of the AX register in DI, this autoincrements by sizeof str being stored
 		add di, 320-2			; Move to next position (two rows down)
 		loop .draw_middle_line	; Loop according to CX and decrement	
+	
+
+
 
 	;; Draw player 
 	imul di, [player_y], ROW_BLEN	; realY = y * rowlen 
@@ -59,6 +64,32 @@ game_loop:
 		add di, ROW_BLEN			; Go to the next row
 		loop .draw_player			; Loop til count is zero		
 
+	;; Move player
+	get_player_input:
+		mov ah, 01h		; Check keyboard buffer state
+		int 16h			; Call keyboard service interrupt
+		jz move_cpu		; Move on if no input
+		
+		mov ah, 0h		; Read key press
+		int 16h
+
+		cmp ah, W_KEY
+		je w_pressed
+		cmp ah, S_KEY
+		je s_pressed
+		
+		jmp move_cpu	
+
+	w_pressed:
+		dec word [player_y]
+		jmp move_cpu
+
+	s_pressed:
+		inc word [player_y]
+		jmp move_cpu
+
+
+	move_cpu:
 
 ;; Draw stuff to the screen
 	
