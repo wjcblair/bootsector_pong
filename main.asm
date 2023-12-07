@@ -11,6 +11,7 @@ jmp setup
 ;; CONSTANTS ----
 VGA_WIDTH		equ 80
 VGA_HEIGHT		equ 25
+PADDLE_WIDTH	equ 2
 PADDLE_HEIGHT	equ 5
 ROW_BLEN		equ VGA_WIDTH*2	; width in bytes: 1 byte for color (4 bits fg, 4 bits bg), 1 byte for char
 PADDLE_INIT_Y	equ 10
@@ -93,8 +94,21 @@ game_loop:
 		neg byte [ball_vel_y] 
 
 	check_player_hit:
+		cmp word [ball_x], PLAYER_X+PADDLE_WIDTH
+		jne check_cpu_hit
+		mov bx, [player_y]
+		cmp bx, [ball_y]
+		jg check_cpu_hit
+		add bx, PADDLE_HEIGHT
+		cmp bx, [ball_y]
+		jl check_cpu_hit	
 
 
+	reverse_ball_x_dir:
+		neg byte [ball_vel_x]
+
+	check_cpu_hit:
+	
 	;; Move player
 	get_player_input:
 		mov ah, 01h		; Check keyboard buffer state
