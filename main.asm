@@ -63,9 +63,6 @@ game_loop:
 		add di, 320-2			; Move to next position (two rows down)
 		loop .draw_middle_line	; Loop according to CX and decrement	
 	
-
-
-
 	;; Draw paddles 
 	imul di, [player_y], ROW_BLEN	; realY = y * rowlen 
 	imul bx, [cpu_y], ROW_BLEN
@@ -77,43 +74,6 @@ game_loop:
 		add bx, ROW_BLEN
 		loop .draw_paddles			; Loop til count is zero		
 	
-	;; Draw ball
-	imul di, [ball_y], ROW_BLEN
-	add di,	[ball_x]
-	mov word [es:di], 0D020h
-
-	;; Move ball
-	mov bl, [ball_vel_x]
-	add [ball_x], bl 
-	mov bl, [ball_vel_y]
-	add [ball_y], bl 
-
-	check_top_or_bottom_collision:
-		mov cx, [ball_y]
-		jcxz reverse_ball_y
-		cmp word cx, 24
-		jne check_player_hit 
-
-	reverse_ball_y:
-		neg byte [ball_vel_y] 
-
-	check_player_hit:
-		cmp word [ball_x], PLAYER_X+PADDLE_WIDTH
-		jne check_cpu_hit
-		mov bx, [player_y]
-		cmp bx, [ball_y]
-		jg check_cpu_hit
-		add bx, PADDLE_HEIGHT
-		cmp bx, [ball_y]
-		jl check_cpu_hit	
-
-
-	reverse_ball_x_dir:
-		neg byte [ball_vel_x]
-
-	check_cpu_hit:
-	
-	;; Move player
 	get_player_input:
 		mov ah, 01h		; Check keyboard buffer state
 		int 16h			; Call keyboard service interrupt
@@ -143,26 +103,86 @@ game_loop:
 		dec word [player_y]
 		jmp move_cpu
 
-		
-
 	move_cpu:
+		mov bx, [cpu_y]
+		cmp word bx, [ball_y]
+		jl move_cpu_down
+		add bx, PADDLE_HEIGHT
+		cmp word bx, [ball_y]
+		jg move_cpu_up
+		jmp draw_ball
 
-;; Draw stuff to the screen
-	
-;; Player input
+	move_cpu_up:
+		dec word [cpu_y]
+		cmp word [cpu_y], 0
+		jge draw_ball
+		inc word [cpu_y]
+		jmp draw_ball
 
-;; CPU input
+	move_cpu_down:
+		inc word [cpu_y]
+		cmp word [cpu_y], VGA_HEIGHT-PADDLE_HEIGHT
+		jle draw_ball
+		dec word [cpu_y]
 
-	;; Delay timer (because CPU draws too fast)
-	mov bx, [046Ch] ; (from BIOS Data Area (BDA)) Move # of IRQ0 timer ticks since boot into bx
+	draw_ball:
+		imul di, [ball_y], ROW_BLEN
+		add di,	[ball_x]
+		mov word [es:di], 0d020h
+
+		;; move ball
+		mov bl, [ball_vel_x]
+		add [ball_x], bl 
+		mov bl, [ball_vel_y]
+		add [ball_y], bl 
+
+	check_top_or_bottom_collision:
+		mov cx, [ball_y]
+		jcxz reverse_ball_y
+		cmp word cx, 24
+		jne check_player_hit 
+
+	reverse_ball_y:
+		neg byte [ball_vel_y] 
+
+	check_player_hit:
+		cmp word [ball_x], PLAYER_X+PADDLE_WIDTH
+		jne check_cpu_hit
+		mov bx, [player_y]
+		cmp bx, [ball_y]
+		jg check_cpu_hit
+		add bx, PADDLE_HEIGHT
+		cmp bx, [ball_y]
+		jl check_cpu_hit	
+		jmp reverse_ball_x_dir
+
+	check_cpu_hit:
+		cmp word [ball_x], CPU_X-PADDLE_WIDTH
+		jne check_score_left
+		mov bx, [player_y]
+		cmp bx, [ball_y]
+		jg check_score_left
+		add bx, PADDLE_HEIGHT
+		cmp bx, [ball_y]
+		jl check_score_left	
+
+	reverse_ball_x_dir:
+		neg byte [ball_vel_x]
+
+	check_score_left:
+
+	check_score_right:
+
+	;; delay timer (because cpu draws too fast)
+	mov bx, [046ch] ; (from bios data area (bda)) move # of irq0 timer ticks since boot into bx
 	inc bx
-	inc bx	; Could do add instead but two incs saves space
-	.delay:	; Compare the number current number of ticks with bx, if difference < 2, delay again
-		cmp [046Ch], bx
+	inc bx	; could do add instead but two incs saves space
+	.delay:	; compare the number current number of ticks with bx, if difference < 2, delay again
+		cmp [046ch], bx
 		jl .delay
 
 jmp game_loop
 
-;; Bootsector padding
+;; bootsector padding
 times 510-($-$$) db 0
-dw 0AA55h ; Write the MAGIC Bootsector # in last 2 bytes
+dw 0aa55h ; write the magic bootsector # in last 2 bytes
