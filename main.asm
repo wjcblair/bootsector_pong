@@ -83,6 +83,17 @@ game_loop:
 	mov bl, [ball_vel_y]
 	add [ball_y], bl 
 
+	check_top_or_bottom_collision:
+		mov cx, [ball_y]
+		jcxz reverse_ball_y
+		cmp word cx, 24
+		jne check_player_hit 
+
+	reverse_ball_y:
+		neg byte [ball_vel_y] 
+
+	check_player_hit:
+
 
 	;; Move player
 	get_player_input:
