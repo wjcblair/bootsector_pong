@@ -15,8 +15,8 @@ PADDLE_WIDTH	equ 2
 PADDLE_HEIGHT	equ 5
 ROW_BLEN		equ VGA_WIDTH*2	; width in bytes: 1 byte for color (4 bits fg, 4 bits bg), 1 byte for char
 PADDLE_INIT_Y	equ 10
-PLAYER_X		equ 4
-CPU_INIT_X		equ ROW_BLEN-3
+PLAYER_X		equ 8
+CPU_X			equ ROW_BLEN-16
 W_KEY			equ 11h
 S_KEY			equ 1Fh
 BALL_INIT_X		equ VGA_WIDTH-10
@@ -26,6 +26,7 @@ BALL_INIT_VEL_Y equ -1
 
 ;; VARIABLES ----
 player_y: dw PADDLE_INIT_Y
+cpu_y: dw PADDLE_INIT_Y
 drawColor: dw 0F020h
 ball_x: dw BALL_INIT_X
 ball_y: dw BALL_INIT_Y
@@ -65,14 +66,17 @@ game_loop:
 
 
 
-	;; Draw player 
+	;; Draw paddles 
 	imul di, [player_y], ROW_BLEN	; realY = y * rowlen 
+	imul bx, [cpu_y], ROW_BLEN
 	mov cl, PADDLE_HEIGHT			; Set count to paddle height
-	.draw_player:
+	.draw_paddles:
 		mov [es:di+PLAYER_X], ax		; Draw current pixel
+		mov [es:bx+CPU_X], ax
 		add di, ROW_BLEN			; Go to the next row
-		loop .draw_player			; Loop til count is zero		
-
+		add bx, ROW_BLEN
+		loop .draw_paddles			; Loop til count is zero		
+	
 	;; Draw ball
 	imul di, [ball_y], ROW_BLEN
 	add di,	[ball_x]
