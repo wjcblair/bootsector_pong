@@ -20,12 +20,16 @@ W_KEY			equ 11h
 S_KEY			equ 1Fh
 BALL_INIT_X		equ VGA_WIDTH-10
 BALL_INIT_Y		equ 12
+BALL_INIT_VEL_X equ -2
+BALL_INIT_VEL_Y equ -1
 
 ;; VARIABLES ----
 player_y: dw PADDLE_INIT_Y
 drawColor: dw 0F020h
 ball_x: dw BALL_INIT_X
 ball_y: dw BALL_INIT_Y
+ball_vel_x: db BALL_INIT_VEL_X
+ball_vel_y: db BALL_INIT_VEL_Y
 
 setup:
 	;; Set up video mode
@@ -72,6 +76,12 @@ game_loop:
 	imul di, [ball_y], ROW_BLEN
 	add di,	[ball_x]
 	mov word [es:di], 0D020h
+
+	;; Move ball
+	mov bl, [ball_vel_x]
+	add [ball_x], bl 
+	mov bl, [ball_vel_y]
+	add [ball_y], bl 
 
 
 	;; Move player
