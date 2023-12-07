@@ -159,7 +159,7 @@ game_loop:
 	check_cpu_hit:
 		cmp word [ball_x], CPU_X-PADDLE_WIDTH
 		jne check_score_left
-		mov bx, [player_y]
+		mov bx, [cpu_y]
 		cmp bx, [ball_y]
 		jg check_score_left
 		add bx, PADDLE_HEIGHT
