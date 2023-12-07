@@ -18,10 +18,14 @@ PLAYER_X		equ 4
 CPU_INIT_X		equ ROW_BLEN-3
 W_KEY			equ 11h
 S_KEY			equ 1Fh
+BALL_INIT_X		equ VGA_WIDTH-10
+BALL_INIT_Y		equ 12
 
 ;; VARIABLES ----
 player_y: dw PADDLE_INIT_Y
 drawColor: dw 0F020h
+ball_x: dw BALL_INIT_X
+ball_y: dw BALL_INIT_Y
 
 setup:
 	;; Set up video mode
@@ -64,6 +68,12 @@ game_loop:
 		add di, ROW_BLEN			; Go to the next row
 		loop .draw_player			; Loop til count is zero		
 
+	;; Draw ball
+	imul di, [ball_y], ROW_BLEN
+	add di,	[ball_x]
+	mov word [es:di], 0D020h
+
+
 	;; Move player
 	get_player_input:
 		mov ah, 01h		; Check keyboard buffer state
@@ -94,7 +104,7 @@ game_loop:
 		dec word [player_y]
 		jmp move_cpu
 
-
+		
 
 	move_cpu:
 
